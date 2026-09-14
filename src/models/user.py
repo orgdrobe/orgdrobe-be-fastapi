@@ -7,7 +7,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import ModelBase
 
 if TYPE_CHECKING:
-    from models import UserIdentity, Role, UserRole, RefreshToken
+    from models import (UserIdentity, Role, UserRole, 
+                        RefreshToken, Garment, Outfit)
 
 class User(ModelBase):
     __tablename__ = "users"
@@ -30,6 +31,9 @@ class User(ModelBase):
     )
 
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
+
+    garments: Mapped[list["Garment"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    outfits: Mapped[list["Outfit"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text('now()'))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text('now()'), onupdate=text('now()'))

@@ -3,3 +3,13 @@ from .user_repo_interface import UserRepositoryInterface
 from .role_repo_interface import RoleRepositoryInterface
 from .user_role_repo_interface import UserRoleRepositoryInterface
 from .refresh_token_repo_interface import RefreshTokenRepositoryInterface
+from .garment_repo_interface import GarmentRepositoryInterface
+from .outfit_repo_interface import OutfitRepositoryInterface
+from .category_master_repo_interface import CategoryMasterRepositoryInterface
+from .category_sub_repo_interface import CategorySubRepositoryInterface
+from .garment_type_repo_interface import GarmentTypeRepositoryInterface
+from .gender_repo_interface import GenderRepositoryInterface
+from .season_repo_interface import SeasonRepositoryInterface
+from .usage_repo_interface import UsageRepositoryInterface
+from .color_repo_interface import ColorRepositoryInterface
+from .generic_repo_interface import GenericRepositoryInterface

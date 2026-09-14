@@ -26,5 +26,4 @@ class RefreshTokenRepository(RefreshTokenRepositoryInterface):
     async def add(self, refresh_token: RefreshToken) -> RefreshToken:
         self._session.add(refresh_token)
         await self._session.flush()
-        await self._session.refresh(refresh_token)
         return refresh_token

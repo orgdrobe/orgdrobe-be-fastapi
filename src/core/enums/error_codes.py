@@ -34,3 +34,30 @@ class ErrorCode(StrEnum):
 
     # --- Rate Limits ---
     TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS"
+
+    # --- Category ---
+    MASTER_CATEGORY_NOT_FOUND = "MASTER_CATEGORY_NOT_FOUND"
+    SUB_CATEGORY_NOT_FOUND = "SUB_CATEGORY_NOT_FOUND"
+
+    # --- Garment Type ---
+    GARMENT_TYPE_NOT_FOUND = "GARMENT_TYPE_NOT_FOUND"
+
+    # --- Gender ---
+    GENDER_NOT_FOUND = "GENDER_NOT_FOUND"
+
+    # --- Season ---
+    SEASON_NOT_FOUND = "SEASON_NOT_FOUND"
+
+    # --- Usage ---
+    USAGE_NOT_FOUND = "USAGE_NOT_FOUND"
+
+    # --- Color ---
+    COLOR_NOT_FOUND = "COLOR_NOT_FOUND"
+
+    # --- Garment ---
+    GARMENT_NOT_FOUND = "GARMENT_NOT_FOUND"
+    GARMENT_NAME_TAKEN = "GARMENT_NAME_TAKEN"
+
+    # --- Outfit ---
+    OUTFIT_NOT_FOUND = "OUTFIT_NOT_FOUND"
+    OUTFIT_NAME_TAKEN = "OUTFIT_NAME_TAKEN"

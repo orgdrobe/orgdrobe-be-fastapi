@@ -3,3 +3,13 @@ from .role_repository import RoleRepository
 from .user_role_repository import UserRoleRepository
 from .identity_repository import UserIdentityRepository
 from .refresh_token_repository import RefreshTokenRepository
+from .garment_repository import GarmentRepository
+from .outfit_repository import OutfitRepository
+from .category_master_repository import CategoryMasterRepository
+from .category_sub_repository import CategorySubRepository
+from .garment_type_repository import GarmentTypeRepository
+from .gender_repository import GenderRepository
+from .season_repository import SeasonRepository
+from .usage_repository import UsageRepository
+from .color_repository import ColorRepository
+from .generic_repository import GenericRepository

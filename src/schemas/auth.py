@@ -1,4 +1,4 @@
-from pydantic import EmailStr, ConfigDict, Field
+from pydantic import EmailStr, ConfigDict, BaseModel
 
 from schemas.base_model import CamelCaseBaseModel
 
@@ -32,7 +32,8 @@ class UserRegisterOut(CamelCaseBaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-class UserLoginOut(CamelCaseBaseModel):
+#
+class UserLoginOut(BaseModel):
     access_token: str = ""
     expires_in: int = -1
     token_type: str = "bearer"
