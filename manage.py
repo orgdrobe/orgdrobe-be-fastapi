@@ -7,6 +7,7 @@ if str(SRC_DIR) not in sys.path:
 
 import typer
 from scripts.seed import cli as seed_cli
+
 global_cli = typer.Typer()
 global_cli.add_typer(seed_cli, name="seed")
 # app.add_typer(cleanup_app, name="cleanup")

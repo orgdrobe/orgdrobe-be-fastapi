@@ -13,13 +13,13 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.security.crypto import pwd_context
-from src.core.configs.superuser_config import superuser_config
-from src.core.configs.logging_config import configure_logging
-from src.core.enums.auth_roles import AuthRole
-from src.core.enums.auth_providers import AuthProvider
-from src.core.database.database_context import async_session_factory
-from src.models import Role, User, UserIdentity, UserRole
+from core.security.crypto import pwd_context
+from core.configs.superuser_config import superuser_config
+from core.configs.logging_config import configure_logging
+from core.enums.auth_roles import AuthRole
+from core.enums.auth_providers import AuthProvider
+from core.database.database_context import async_session_factory
+from models import Role, User, UserIdentity, UserRole
 
 
 cli = typer.Typer()
