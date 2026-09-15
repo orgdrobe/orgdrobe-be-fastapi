@@ -1,25 +1,31 @@
 import sys
-import os
+from pathlib import Path
 
 # Manually
 # Required for import from src.... like from core.enums
-current_dir = os.path.dirname(os.path.abspath(__file__))
-root_dir = os.path.dirname(current_dir)
-sys.path.insert(0, os.path.join(root_dir, "src"))
+SRC_DIR = Path(__file__).resolve().parent.parent / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 ########################################################
 
 import asyncio
+
 from logging.config import fileConfig
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-
 from alembic import context
+
+from src.core.configs import database_config   
+from src.models import *
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+config.set_main_option("sqlalchemy.url", f"{database_config.DIALECT_DRIVER}://{database_config.USERNAME}:{database_config.PASSWORD}@{database_config.HOST}:{database_config.PORT}/{database_config.NAME_OR_PATH}")
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -30,7 +36,6 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from src.models import *
 target_metadata = ModelBase.metadata
 
 # other values from the config, defined by the needs of env.py,
