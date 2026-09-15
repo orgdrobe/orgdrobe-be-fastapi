@@ -14,12 +14,15 @@ uv sync
 
 # docker
 cd infra
-docker-compose -p orgdrope up -d --build 
+docker-compose -p orgdrope up -d --build
 cd ..
 
 # migration
 uv run alembic upgrade head
 
-# seeding - TODO
+# seeding
+cd src
+uv run --env-file ../.env python -m scripts.seed all
+cd ..
 
 ```
