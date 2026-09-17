@@ -1,4 +1,4 @@
-[old redme for `/app`](README-app.md)
+[old readme for `/app`](README-app.md)
 
 # OrgDrobe - Backend - FastAPI
 
@@ -9,7 +9,6 @@
 # TODO? add template in readme.md or as a file
 
 # python
-pip install uv
 uv sync
 
 # docker
