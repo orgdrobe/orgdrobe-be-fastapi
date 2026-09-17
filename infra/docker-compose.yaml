@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres-db
+    hostname: postgres-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: admin
+      TZ: UTC
+    ports:
+      - "5432:5432"  # формат: host:container
+    volumes:
+      - ./pgdata:/var/lib/postgresql
+      - ./init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+
+# docker-compose -p orgdrope up -d --build

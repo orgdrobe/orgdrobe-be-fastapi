@@ -86,3 +86,10 @@ fastapi dev app/main.py --host 0.0.0.0 --port 8000
 `.env.shared` - default values 
 
 `.env.secret` - your sensitive variables (that will override the default ones). you may create this file but don't commit it. use `.env.shared` as an example
+
+
+## LATER
+use seed script 
+
+`cd src`
+(root/src) `uv run python -m scripts.seed` temporary
