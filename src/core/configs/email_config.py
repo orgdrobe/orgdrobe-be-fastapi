@@ -1,10 +1,10 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import SecretStr
+from pydantic import SecretStr, EmailStr
 
 class EmailConfig(BaseSettings):
     USERNAME: str
     PASSWORD: SecretStr
-    FROM: str
+    FROM: EmailStr
     PORT: int
     SERVER: str
     FROM_NAME: str
