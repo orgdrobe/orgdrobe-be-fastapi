@@ -21,8 +21,9 @@ cd ..
 uv run alembic upgrade head
 
 # seeding
-cd src
-uv run --env-file ../.env python -m scripts.seed all
-cd ..
+uv run manage.py seed all
+
+# run
+uv run fastapi dev src/main.py
 
 ```
