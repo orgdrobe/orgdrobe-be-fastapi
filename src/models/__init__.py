@@ -11,7 +11,7 @@ from .garment_type import GarmentType
 from .season import Season
 from .usage import Usage
 from .color import Color
-from .outfit import Outfit, OutfitGarment, OutfitColor
+from .outfit import Outfit, OutfitColor, outfit_garments
 
 __all__ = [
     "ModelBase",
@@ -27,5 +27,5 @@ __all__ = [
     "Season",
     "Usage",
     "Color",
-    "Outfit", "OutfitGarment", "OutfitColor"
+    "Outfit", "OutfitColor", "outfit_garments"
 ]

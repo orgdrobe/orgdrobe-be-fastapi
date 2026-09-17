@@ -29,5 +29,4 @@ class UserIdentityRepository(UserIdentityRepositoryInterface):
     async def add(self, user_identity: UserIdentity) -> UserIdentity:
         self._session.add(user_identity)
         await self._session.flush()
-        await self._session.refresh(user_identity)
         return user_identity

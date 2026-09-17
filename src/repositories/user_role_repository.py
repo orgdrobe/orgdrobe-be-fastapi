@@ -10,5 +10,4 @@ class UserRoleRepository(UserRoleRepositoryInterface):
     async def add(self, user_role: UserRole) -> UserRole:
         self._session.add(user_role)
         await self._session.flush()
-        await self._session.refresh(user_role)
         return user_role
