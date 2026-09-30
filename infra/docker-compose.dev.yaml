@@ -11,7 +11,7 @@ services:
       POSTGRES_DB: admin
       TZ: UTC
     ports:
-      - "5432:5432"  # формат: host:container
+      - "5432:5432" # формат: host:container
     volumes:
       - ./pgdata:/var/lib/postgresql
       - ./init:/docker-entrypoint-initdb.d
@@ -20,8 +20,88 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - dev-net
+
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs-master
+    restart: unless-stopped
+    command: "master -ip=seaweedfs-master -port=9333 -mdir=/data"
+    volumes:
+      - ./seaweedfs_master_data:/data
+    ports:
+      - "9333:9333"
+    networks:
+      - dev-net
+
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs-volume
+    restart: unless-stopped
+    command: "volume -mserver=seaweedfs-master:9333 -port=8085 -ip=seaweedfs-volume -dir=/data -max=10"
+    volumes:
+      - ./seaweedfs_volume_data:/data
+    ports:
+      - "8085:8085"
+    depends_on:
+      - seaweedfs-master
+    networks:
+      - dev-net
+
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs-filer
+    restart: unless-stopped
+    command: "filer -master=seaweedfs-master:9333 -ip=seaweedfs-filer -port=8888"
+    volumes:
+      - ./seaweedfs_filer_data:/data
+    ports:
+      - "8888:8888"
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+    networks:
+      - dev-net
+
+  seaweedfs-s3:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs-s3
+    restart: unless-stopped
+    command: "s3 -filer=seaweedfs-filer:8888 -port=8333 -ip.bind=0.0.0.0"
+    ports:
+      - "8333:8333"
+    depends_on:
+      - seaweedfs-filer
+    networks:
+      - dev-net
+
+  seaweedfs-init:
+    image: amazon/aws-cli:latest
+    container_name: seaweedfs-init
+    depends_on:
+      - seaweedfs-s3
+    environment:
+      AWS_ACCESS_KEY_ID: any_key
+      AWS_SECRET_ACCESS_KEY: any_secret
+      AWS_DEFAULT_REGION: us-east-1
+      S3_BUCKET_NAME: media
+    volumes:
+      - ./init_s3/init-s3.sh:/scripts/init-s3.sh:ro
+      - ./init_s3/cors.json:/scripts/cors.json:ro
+    entrypoint: ["/bin/sh", "/scripts/init-s3.sh"]
+    networks:
+      - dev-net
 
 volumes:
   pgdata:
+  seaweedfs_master_data:
+  seaweedfs_volume_data:
+  seaweedfs_filer_data:
+
+networks:
+  dev-net:
+    driver: bridge
 
 # docker-compose -p orgdrope up -d --build
+# docker compose -f docker-compose.dev.yaml -p orgdrope up -d --build
