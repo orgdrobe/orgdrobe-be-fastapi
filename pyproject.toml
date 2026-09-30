@@ -5,13 +5,16 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "aioboto3>=15.5.0",
     "alembic>=1.18.1",
     "asgi-correlation-id>=4.3.4",
     "asyncpg>=0.31.0",
     "cashews>=7.5.0",
     "fastapi-mail>=1.6.2",
     "fastapi[standard]>=0.128.0",
+    "filetype>=1.2.0",
     "passlib[argon2]>=1.7.4",
+    "pillow>=12.3.0",
     "pyjwt[crypto]>=2.11.0",
     "sqlalchemy>=2.0.45",
     "structlog>=25.5.0",
