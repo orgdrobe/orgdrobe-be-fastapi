@@ -1,23 +1,38 @@
 from abc import ABC, abstractmethod
-from typing import Type, TypeVar, Self, Callable
+from typing import Callable, Self, Type, TypeVar
 
 R = TypeVar("R")
 
+
 class UnitOfWorkInterface(ABC):
-    @abstractmethod
-    async def __aenter__(self) -> Self: ...
-    
-    @abstractmethod
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None: ...
-    
-    @abstractmethod
-    async def commit(self) -> None: ...
+    """Interface for atomic transaction lifecycle and scoped repository resolution."""
 
     @abstractmethod
-    async def rollback(self) -> None: ...
+    async def __aenter__(self) -> Self:
+        """Enter the asynchronous transaction context."""
+        ...
 
     @abstractmethod
-    def get_repo(self, repo_type: Type[R]) -> R: ...
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit the asynchronous transaction context, rolling back on unhandled error."""
+        ...
 
     @abstractmethod
-    def get_repo_by_interface(self, interface: Callable[..., R]) -> R: ...
+    async def commit(self) -> None:
+        """Commit all pending database operations in the active transaction."""
+        ...
+
+    @abstractmethod
+    async def rollback(self) -> None:
+        """Roll back all pending database operations in the active transaction."""
+        ...
+
+    @abstractmethod
+    def get_repo(self, repo_type: Type[R]) -> R:
+        """Retrieve a repository instance by concrete class bound to the current session."""
+        ...
+
+    @abstractmethod
+    def get_repo_by_interface(self, interface: Callable[..., R]) -> R:
+        """Retrieve a repository instance matching the given interface contract."""
+        ...

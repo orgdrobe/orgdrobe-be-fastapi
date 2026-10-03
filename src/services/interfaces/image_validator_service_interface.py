@@ -6,6 +6,8 @@ from schemas.image import ValidatedImage
 
 
 class ImageValidatorServiceInterface(ABC):
+    """Interface for validating, verifying, and normalizing uploaded image files."""
+
     @abstractmethod
     async def validate_and_process(
         self,
