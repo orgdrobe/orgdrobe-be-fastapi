@@ -41,3 +41,10 @@ mypy_path = "src"
 explicit_package_bases = true
 namespace_packages = true
 python_version = "3.13"
+
+[[tool.mypy.overrides]]
+module = [
+    "filetype.*",
+    "filetype",
+]
+ignore_missing_imports = true

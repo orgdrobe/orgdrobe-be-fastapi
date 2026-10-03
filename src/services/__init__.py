@@ -11,3 +11,4 @@ from .season_service import SeasonService
 from .usage_service import UsageService
 from .color_service import ColorService
 from .unit_of_work import SqlAlchemyUnitOfWork
+from .image_validator_service import ImageValidatorService

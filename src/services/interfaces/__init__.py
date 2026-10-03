@@ -11,3 +11,4 @@ from .season_service_interface import SeasonServiceInterface
 from .usage_service_interface import UsageServiceInterface
 from .color_service_interface import ColorServiceInterface
 from .unit_of_work_interface import UnitOfWorkInterface
+from .image_validator_service_interface import ImageValidatorServiceInterface
