@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from .base import ENV_FILE
 
 class JwtConfig(BaseSettings):
     SECRET_KEY: str = Field(
@@ -32,7 +33,7 @@ class JwtConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="SECURITY_",
         extra="ignore",
-        env_file=(".env"),
+        env_file=ENV_FILE,
         env_file_encoding="utf-8",
     )
 

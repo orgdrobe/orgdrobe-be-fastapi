@@ -1,6 +1,7 @@
 from pydantic import EmailStr, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from .base import ENV_FILE
 
 class SuperUserConfig(BaseSettings):
     SUPERUSER_USERNAME: str = Field(
@@ -19,7 +20,7 @@ class SuperUserConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="FIRST_",
         extra="ignore",
-        env_file=(".env", "../.env"),
+        env_file=ENV_FILE,
         env_file_encoding="utf-8",
     )
 

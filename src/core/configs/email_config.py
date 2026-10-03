@@ -1,6 +1,7 @@
 from pydantic import EmailStr, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from .base import ENV_FILE
 
 class EmailConfig(BaseSettings):
     USERNAME: str = Field(
@@ -35,7 +36,7 @@ class EmailConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="MAIL_",
         extra="ignore",
-        env_file=(".env"),
+        env_file=ENV_FILE,
         env_file_encoding="utf-8",
     )
 

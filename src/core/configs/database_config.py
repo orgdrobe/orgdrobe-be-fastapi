@@ -1,6 +1,7 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from .base import ENV_FILE
 
 class DatabaseConfig(BaseSettings):
     DIALECT_DRIVER: str = Field(
@@ -41,7 +42,7 @@ class DatabaseConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="DB_",
         extra="ignore",
-        env_file=(".env", "../.env"),
+        env_file=ENV_FILE,
         env_file_encoding="utf-8",
     )
 
