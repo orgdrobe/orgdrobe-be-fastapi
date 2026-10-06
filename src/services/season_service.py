@@ -14,6 +14,7 @@ class SeasonService(SeasonServiceInterface):
         self._uow = uow 
 
     async def create(self, new_season: NewSeason) -> SeasonOut:
+        """Create a new season entry."""
         logger.info("creating_season", name=new_season.name)
         
         async with self._uow as uow:
@@ -31,6 +32,7 @@ class SeasonService(SeasonServiceInterface):
         return result
 
     async def get_by_id(self, id: int) -> SeasonOut:
+        """Retrieve a season entry by its ID."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(SeasonRepositoryInterface)
             
@@ -43,6 +45,7 @@ class SeasonService(SeasonServiceInterface):
         return result
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> list[SeasonOut]:
+        """Retrieve a paginated list of season entries."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(SeasonRepositoryInterface)
             
@@ -52,6 +55,7 @@ class SeasonService(SeasonServiceInterface):
         return result
 
     async def update(self, id: int, update_data: UpdateSeason) -> SeasonOut:
+        """Update an existing season entry."""
         logger.info("updating_season", season_id=id)
         
         async with self._uow as uow:
@@ -73,6 +77,7 @@ class SeasonService(SeasonServiceInterface):
         return result
 
     async def delete(self, id: int) -> bool:
+        """Delete a season entry by its ID."""
         logger.info("deleting_season", season_id=id)
         
         async with self._uow as uow:

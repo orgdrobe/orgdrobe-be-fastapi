@@ -13,6 +13,7 @@ class SubCategoryService(SubCategoryServiceInterface):
         self._uow = uow 
 
     async def create(self, new_category_master: NewSubCategory) -> SubCategoryOut:
+        """Create a new sub category."""
         logger.info("creating_sub_category", name=new_category_master.name)
         
         async with self._uow as uow:
@@ -30,6 +31,7 @@ class SubCategoryService(SubCategoryServiceInterface):
         return result
 
     async def get_by_id(self, id: int) -> SubCategoryOut:
+        """Retrieve a sub category by its ID."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(CategorySubRepositoryInterface)
             
@@ -42,6 +44,7 @@ class SubCategoryService(SubCategoryServiceInterface):
         return result
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> list[SubCategoryOut]:
+        """Retrieve a paginated list of sub categories."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(CategorySubRepositoryInterface)
             
@@ -51,6 +54,7 @@ class SubCategoryService(SubCategoryServiceInterface):
         return result
 
     async def update(self, id: int, update_data: UpdateSubCategory) -> SubCategoryOut:
+        """Update an existing sub category."""
         logger.info("updating_sub_category", category_id=id)
         
         async with self._uow as uow:
@@ -72,6 +76,7 @@ class SubCategoryService(SubCategoryServiceInterface):
         return result
 
     async def delete(self, id: int) -> bool:
+        """Delete a sub category by its ID."""
         logger.info("deleting_sub_category", category_id=id)
         
         async with self._uow as uow:

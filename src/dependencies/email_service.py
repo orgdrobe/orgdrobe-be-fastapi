@@ -5,7 +5,8 @@ from services.interfaces import EmailServiceInterface
 from core.configs import email_config
 
 def get_email_service() -> EmailServiceInterface:
-        connection_config = ConnectionConfig(
+    """Provide EmailService instance configured with SMTP connection settings."""
+    connection_config = ConnectionConfig(
         MAIL_USERNAME=email_config.USERNAME,
         MAIL_PASSWORD=email_config.PASSWORD,
         MAIL_FROM=email_config.FROM,
@@ -15,7 +16,7 @@ def get_email_service() -> EmailServiceInterface:
         MAIL_STARTTLS=False,         # Port 465 uses implicit SSL, not STARTTLS
         MAIL_SSL_TLS=True,           # This is required for Port 465
         USE_CREDENTIALS=True,
-        VALIDATE_CERTS=True
-        )
+        VALIDATE_CERTS=True,
+    )
 
-        return EmailService(connection_config)
+    return EmailService(connection_config)

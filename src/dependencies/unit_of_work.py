@@ -16,6 +16,7 @@ from repositories.interfaces import (UserIdentityRepositoryInterface, UserReposi
 
 
 def get_unit_of_work() -> UnitOfWorkInterface:
+    """Provide Unit of Work instance with all repository factories registered."""
     unit_of_work = SqlAlchemyUnitOfWork(session_factory=async_session_factory)
     
     unit_of_work.register_factory_by_interface(UserRepositoryInterface, lambda session: UserRepository(session))

@@ -6,5 +6,6 @@ from .unit_of_work import get_unit_of_work
 
 
 def get_garment_type_service(uow: UnitOfWorkInterface = Depends(get_unit_of_work)) -> GarmentTypeServiceInterface: 
+    """Provide GarmentTypeService instance with Unit of Work dependency."""
     return GarmentTypeService(uow)
 

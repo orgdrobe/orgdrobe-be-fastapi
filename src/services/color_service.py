@@ -14,6 +14,7 @@ class ColorService(ColorServiceInterface):
         self._uow = uow 
 
     async def create(self, new_color: NewColor) -> ColorOut:
+        """Create a new color entry."""
         logger.info("creating_color", red=new_color.red, green=new_color.green, blue=new_color.blue)
         
         async with self._uow as uow:
@@ -31,6 +32,7 @@ class ColorService(ColorServiceInterface):
         return result
 
     async def get_by_id(self, id: int) -> ColorOut:
+        """Retrieve a color entry by its ID."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(ColorRepositoryInterface)
             
@@ -43,6 +45,7 @@ class ColorService(ColorServiceInterface):
         return result
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> list[ColorOut]:
+        """Retrieve a paginated list of colors."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(ColorRepositoryInterface)
             
@@ -52,6 +55,7 @@ class ColorService(ColorServiceInterface):
         return result
 
     async def update(self, id: int, update_data: UpdateColor) -> ColorOut:
+        """Update an existing color entry."""
         logger.info("updating_color", color_id=id)
         
         async with self._uow as uow:
@@ -73,6 +77,7 @@ class ColorService(ColorServiceInterface):
         return result
 
     async def delete(self, id: int) -> bool:
+        """Delete a color entry by its ID."""
         logger.info("deleting_color", color_id=id)
         
         async with self._uow as uow:

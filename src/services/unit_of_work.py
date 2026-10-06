@@ -17,17 +17,20 @@ class SqlAlchemyUnitOfWork(UnitOfWorkInterface):
         self._factories: dict[Any, Callable[[AsyncSession], Any]] = {}
 
     def register_factory(self, repo_type: Type[R], factory: Callable[[AsyncSession], R]) -> None:
+        """Register a repository factory function by concrete class type."""
         self._factories[repo_type] = factory
 
     def register_factory_by_interface(self, interface: Callable[..., R], factory: Callable[[AsyncSession], R]) -> None:
+        """Register a repository factory function by interface type."""
         self._factories[interface] = factory
 
-
     async def __aenter__(self) -> Self:
+        """Start the Unit of Work and initialize database session."""
         self._session = self._session_factory()
         return self
     
     async def __aexit__(self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> None:
+        """Exit the Unit of Work, roll back on error, and close session."""
         if not self._session:
             return
     
@@ -44,14 +47,17 @@ class SqlAlchemyUnitOfWork(UnitOfWorkInterface):
             self._repositories = {}
         
     async def commit(self) -> None:
+        """Commit pending database transaction."""
         if self._session:
             await self._session.commit()
 
     async def rollback(self) -> None:
+        """Roll back active database transaction."""
         if self._session:
             await self._session.rollback()
      
     def get_repo(self, repo_type: Type[R]) -> R:
+        """Retrieve or lazily instantiate repository by concrete type."""
         if self._session is None:
             raise RuntimeError("Unit of Work has not been started. Use async with uow:")
         
@@ -73,6 +79,7 @@ class SqlAlchemyUnitOfWork(UnitOfWorkInterface):
         return new_repo
 
     def get_repo_by_interface(self, interface: Callable[..., R]) -> R:
+        """Retrieve or lazily instantiate repository bound to the interface."""
         if self._session is None:
             raise RuntimeError("Unit of Work has not been started. Use async with uow:")
         

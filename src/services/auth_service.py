@@ -59,12 +59,13 @@ class AuthService(AuthServiceInterface):
         self.config = config or AuthConfig()
 
     async def register_user(self, new_user: UserRegister) -> UserRegisterOut: 
+        """Register a new user account with default role and local credentials."""
         logger.info("user_registration_attempt", email=new_user.email, username=new_user.username)
         async with self._uow as uow:
             user_repository = uow.get_repo_by_interface(UserRepositoryInterface) 
             user_identity_repository = uow.get_repo_by_interface(UserIdentityRepositoryInterface) 
             role_repository = uow.get_repo_by_interface(RoleRepositoryInterface) 
-            user_role_repository = uow.get_repo_by_interface(UserRoleRepositoryInterface)
+            user_role_repository = uow.get_repo_by_interface(UserRoleRepositoryInterface) 
 
             if await user_repository.get_by_username(new_user.username):
                 logger.warning("user_registration_failed", reason="username_taken", username=new_user.username)
@@ -110,6 +111,7 @@ class AuthService(AuthServiceInterface):
         return result
     
     async def local_login(self, user_credentials: UserLogin) -> tuple[UserLoginOut, str]:
+        """Authenticate user credentials and issue access + refresh tokens."""
         logger.info("user_login_attempt", email=user_credentials.email)
         async with self._uow as uow:
             user_identity_repository = uow.get_repo_by_interface(UserIdentityRepositoryInterface) 
@@ -157,6 +159,7 @@ class AuthService(AuthServiceInterface):
         return result, refresh_token
 
     async def refresh_tokens(self, refresh_token: str | None) -> tuple[UserLoginOut, str]:
+        """Validate refresh token, rotate it, and issue a new token pair."""
         if refresh_token is None:
             logger.warning("token_refresh_failed", reason="missing_token")
             raise MissingRefreshToken()     
@@ -213,6 +216,7 @@ class AuthService(AuthServiceInterface):
         return result, new_refresh_token
 
     async def logout(self, refresh_token: str | None) -> None:
+        """Revoke the specified refresh token in storage."""
         if not refresh_token:
             logger.debug("logout_aborted", reason="no_token_provided")
             return
@@ -235,6 +239,7 @@ class AuthService(AuthServiceInterface):
                 logger.debug("logout_skipped", reason="token_already_revoked_or_not_found", jti=jti)
 
     async def forgot_password(self, user_email: str) -> str | None:
+        """Generate a secure password reset token and store in cache with TTL."""
         reset_token_key = f"reset_token:{user_email}"
         logger.info("forgot_password_generation_token_attempt", email=user_email)
         async with self._uow as uow:
@@ -256,6 +261,7 @@ class AuthService(AuthServiceInterface):
         return reset_token
 
     async def reset_password(self, reset_token: str, new_password: str) -> None:
+        """Verify password reset token and update user password hash."""
         logger.info("reset_password_attempt")
 
         payload = self._decode_token(reset_token)
@@ -296,6 +302,7 @@ class AuthService(AuthServiceInterface):
         logger.info("reset_password_successfully", user_id=user_id)
 
     async def get_verification_code(self, user_email: str) -> str | None:
+        """Generate and cache a 6-digit verification code with daily rate limiting."""
         logger.info("verification_code_generation_attempt", email=user_email)
         limit_key = f"daily_limit:verify_code:{user_email}"
 
@@ -330,6 +337,7 @@ class AuthService(AuthServiceInterface):
         return code
 
     async def verify_user(self, user_verification_data: AccountVerification) -> None:
+        """Verify confirmation code against cache with brute-force protection and activate user."""
         email = user_verification_data.email
         logger.info("user_verification_attempt", email=email)
         
@@ -374,15 +382,16 @@ class AuthService(AuthServiceInterface):
         await self._cache_service.delete(brute_force_key)
         logger.info("user_verified_successfully", email=email, user_id=user.id)
 
-
-
     def _hash_password(self, password: str) -> str:
+        """Hash plaintext password using configured CryptContext."""
         return self._pwd_context.hash(password)
     
     def _verify_password(self, plain: str, hashed: Optional[str]) -> bool:
+        """Verify plaintext password against stored hash."""
         return self._pwd_context.verify(plain, hashed)
     
     def _create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
+        """Encode JWT access token with payload and expiration."""
         to_encode = data.copy()
         now = datetime.now(timezone.utc)
 
@@ -398,10 +407,12 @@ class AuthService(AuthServiceInterface):
         })
         return jwt.encode(to_encode, self.config.secret_key, algorithm=self.config.algorithm)
     
-    def _create_refresh_token_jti(self):
+    def _create_refresh_token_jti(self) -> str:
+        """Generate a unique UUIDv7 string identifier for refresh token."""
         return str(uuid6.uuid7())
     
     def _create_refresh_token_payload(self, jti: str, expires_delta: Optional[timedelta] = None) -> dict:
+        """Create dictionary payload for refresh token with expiration."""
         now = datetime.now(timezone.utc)
         
         if expires_delta:
@@ -417,6 +428,7 @@ class AuthService(AuthServiceInterface):
         }
     
     def _decode_token(self, token: str) -> dict[str,Any] | None:
+        """Decode and validate JWT token string using configured secret key."""
         try:
             payload = jwt.decode(
                 token,

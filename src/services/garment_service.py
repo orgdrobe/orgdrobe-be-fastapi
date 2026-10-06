@@ -54,6 +54,7 @@ class GarmentService(GarmentServiceInterface):
         season_id: int | None = None,
         usage_id: int | None = None
     ) -> tuple[Gender | None, CategoryMaster | None, CategorySub | None, GarmentType | None, Season | None, Usage | None]:
+        """Validate and retrieve foreign key entity models for a garment."""
         gender = None
         if gender_id is not None:
             gender_repo = uow.get_repo_by_interface(GenderRepositoryInterface)
@@ -103,6 +104,7 @@ class GarmentService(GarmentServiceInterface):
         color_repo: ColorRepositoryInterface,
         colors_data: list[Any] | None,
     ) -> list[GarmentColor]:
+        """Resolve or create Color models and link them via GarmentColor association."""
         if not colors_data:
             return []
         resolved: list[GarmentColor] = []
@@ -128,6 +130,7 @@ class GarmentService(GarmentServiceInterface):
         return resolved
 
     async def create(self, user_id: int, new_garment: NewGarment) -> GarmentOut:
+        """Create a new garment for the specified user after validating foreign keys."""
         logger.info("creating_garment", user_id=user_id, name=new_garment.name)
         
         async with self._uow as uow:
@@ -178,6 +181,7 @@ class GarmentService(GarmentServiceInterface):
         return result
 
     async def get_by_id(self, user_id: int, id: int) -> GarmentOut:
+        """Retrieve a garment by its ID ensuring user ownership."""
         async with self._uow as uow:
             garment_repository = uow.get_repo_by_interface(GarmentRepositoryInterface)
             
@@ -191,6 +195,7 @@ class GarmentService(GarmentServiceInterface):
         return result
 
     async def get_all_by_user_id(self, user_id: int, skip: int = 0, limit: int = 100) -> list[GarmentOut]:
+        """Retrieve a paginated list of garments belonging to the user."""
         async with self._uow as uow:
             garment_repository = uow.get_repo_by_interface(GarmentRepositoryInterface)
             
@@ -200,6 +205,7 @@ class GarmentService(GarmentServiceInterface):
         return result
 
     async def update(self, user_id: int, id: int, update_data: UpdateGarment) -> GarmentOut:
+        """Update fields, relationships, and colors of an existing user garment."""
         logger.info("updating_garment", garment_id=id, user_id=user_id)
         
         async with self._uow as uow:
@@ -265,6 +271,7 @@ class GarmentService(GarmentServiceInterface):
         return result
 
     async def delete(self, user_id: int, id: int) -> bool:
+        """Delete a user garment by ID."""
         logger.info("deleting_garment", garment_id=id, user_id=user_id)
         
         async with self._uow as uow:
@@ -285,6 +292,7 @@ class GarmentService(GarmentServiceInterface):
         return True
 
     def _map_garment_to_out(self, garment: Garment) -> GarmentOut:
+        """Convert Garment ORM model into GarmentOut schema."""
         colors_out = [
             GarmentColorOut(
                 id=gc.color.id if gc.color else gc.color_id,

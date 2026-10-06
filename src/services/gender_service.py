@@ -14,6 +14,7 @@ class GenderService(GenderServiceInterface):
         self._uow = uow 
 
     async def create(self, new_gender: NewGender) -> GenderOut:
+        """Create a new gender entry."""
         logger.info("creating_gender", name=new_gender.name)
         
         async with self._uow as uow:
@@ -31,6 +32,7 @@ class GenderService(GenderServiceInterface):
         return result
 
     async def get_by_id(self, id: int) -> GenderOut:
+        """Retrieve a gender entry by its ID."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(GenderRepositoryInterface)
             
@@ -43,6 +45,7 @@ class GenderService(GenderServiceInterface):
         return result
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> list[GenderOut]:
+        """Retrieve a paginated list of gender entries."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(GenderRepositoryInterface)
             
@@ -52,6 +55,7 @@ class GenderService(GenderServiceInterface):
         return result
 
     async def update(self, id: int, update_data: UpdateGender) -> GenderOut:
+        """Update an existing gender entry."""
         logger.info("updating_gender", gender_id=id)
         
         async with self._uow as uow:
@@ -73,6 +77,7 @@ class GenderService(GenderServiceInterface):
         return result
 
     async def delete(self, id: int) -> bool:
+        """Delete a gender entry by its ID."""
         logger.info("deleting_gender", gender_id=id)
         
         async with self._uow as uow:

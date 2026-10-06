@@ -32,6 +32,7 @@ class OutfitService(OutfitServiceInterface):
         color_repo: ColorRepositoryInterface,
         colors_data: list[Any] | None,
     ) -> list[OutfitColor]:
+        """Resolve or create Color models and link them via OutfitColor association."""
         if not colors_data:
             return []
         resolved: list[OutfitColor] = []
@@ -62,6 +63,7 @@ class OutfitService(OutfitServiceInterface):
         user_id: int,
         garment_ids: list[int] | None,
     ) -> list[Garment]:
+        """Verify garments exist, belong to user, and return garment models."""
         if not garment_ids:
             return []
         unique_ids = list(dict.fromkeys(garment_ids))
@@ -83,6 +85,7 @@ class OutfitService(OutfitServiceInterface):
         return list(existing_garments)
 
     async def create(self, user_id: int, new_outfit: NewOutfit) -> OutfitOut:
+        """Create a new outfit composed of garments and colors."""
         logger.info("creating_outfit", user_id=user_id, name=new_outfit.name)
 
         async with self._uow as uow:
@@ -113,6 +116,7 @@ class OutfitService(OutfitServiceInterface):
         return result
 
     async def get_by_id(self, user_id: int, id: int) -> OutfitOut:
+        """Retrieve an outfit by its ID ensuring user ownership."""
         async with self._uow as uow:
             outfit_repository = uow.get_repo_by_interface(OutfitRepositoryInterface)
 
@@ -125,6 +129,7 @@ class OutfitService(OutfitServiceInterface):
         return result
 
     async def get_all_by_user_id(self, user_id: int, skip: int = 0, limit: int = 100) -> list[OutfitOut]:
+        """Retrieve a paginated list of outfits belonging to the user."""
         async with self._uow as uow:
             outfit_repository = uow.get_repo_by_interface(OutfitRepositoryInterface)
 
@@ -134,6 +139,7 @@ class OutfitService(OutfitServiceInterface):
         return result
 
     async def update(self, user_id: int, id: int, update_data: UpdateOutfit) -> OutfitOut:
+        """Update outfit metadata, associated garments, and colors."""
         logger.info("updating_outfit", outfit_id=id, user_id=user_id)
 
         async with self._uow as uow:
@@ -170,6 +176,7 @@ class OutfitService(OutfitServiceInterface):
         return result
 
     async def delete(self, user_id: int, id: int) -> bool:
+        """Delete a user outfit by ID."""
         logger.info("deleting_outfit", outfit_id=id, user_id=user_id)
 
         async with self._uow as uow:
@@ -190,6 +197,7 @@ class OutfitService(OutfitServiceInterface):
         return True
 
     def _map_garment_to_out(self, garment: Garment) -> GarmentOut:
+        """Convert Garment ORM model into GarmentOut schema."""
         colors_out = [
             GarmentColorOut(
                 id=gc.color.id if gc.color else gc.color_id,
@@ -216,6 +224,7 @@ class OutfitService(OutfitServiceInterface):
         )
 
     def _map_outfit_to_out(self, outfit: Outfit) -> OutfitOut:
+        """Convert Outfit ORM model into OutfitOut schema."""
         garments_out = [
             self._map_garment_to_out(garment)
             for garment in (outfit.garments or [])

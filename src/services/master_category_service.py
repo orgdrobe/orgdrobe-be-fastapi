@@ -13,6 +13,7 @@ class MasterCategoryService(MasterCategoryServiceInterface):
         self._uow = uow 
 
     async def create(self, new_category_master: NewMasterCategory) -> MasterCategoryOut:
+        """Create a new master category."""
         logger.info("creating_master_category", name=new_category_master.name)
         
         async with self._uow as uow:
@@ -30,6 +31,7 @@ class MasterCategoryService(MasterCategoryServiceInterface):
         return result
 
     async def get_by_id(self, id: int) -> MasterCategoryOut:
+        """Retrieve a master category by its ID."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(CategoryMasterRepositoryInterface)
             
@@ -42,6 +44,7 @@ class MasterCategoryService(MasterCategoryServiceInterface):
         return result
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> list[MasterCategoryOut]:
+        """Retrieve a paginated list of master categories."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(CategoryMasterRepositoryInterface)
             
@@ -51,6 +54,7 @@ class MasterCategoryService(MasterCategoryServiceInterface):
         return result
 
     async def update(self, id: int, update_data: UpdateMasterCategory) -> MasterCategoryOut:
+        """Update an existing master category."""
         logger.info("updating_master_category", category_id=id)
         
         async with self._uow as uow:
@@ -72,6 +76,7 @@ class MasterCategoryService(MasterCategoryServiceInterface):
         return result
 
     async def delete(self, id: int) -> bool:
+        """Delete a master category by its ID."""
         logger.info("deleting_master_category", category_id=id)
         
         async with self._uow as uow:

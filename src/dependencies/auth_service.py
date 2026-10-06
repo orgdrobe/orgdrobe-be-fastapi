@@ -7,6 +7,11 @@ from .unit_of_work import get_unit_of_work
 from .password_context import get_pwd_context
 from .cache_service import get_cache_service
 
-def get_auth_service(uow: UnitOfWorkInterface = Depends(get_unit_of_work), cache_service: CacheServiceInterface = Depends(get_cache_service), pwd_context: CryptContext = Depends(get_pwd_context)) -> AuthServiceInterface: 
+def get_auth_service(
+    uow: UnitOfWorkInterface = Depends(get_unit_of_work),
+    cache_service: CacheServiceInterface = Depends(get_cache_service),
+    pwd_context: CryptContext = Depends(get_pwd_context),
+) -> AuthServiceInterface: 
+    """Provide AuthService instance initialized with Unit of Work, cache, and password context."""
     cache_service.prefix = "auth"
     return AuthService(uow, cache_service, pwd_context)

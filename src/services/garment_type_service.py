@@ -14,6 +14,7 @@ class GarmentTypeService(GarmentTypeServiceInterface):
         self._uow = uow 
 
     async def create(self, new_garment_type: NewGarmentType) -> GarmentTypeOut:
+        """Create a new garment type."""
         logger.info("creating_garment_type", name=new_garment_type.name)
         
         async with self._uow as uow:
@@ -31,6 +32,7 @@ class GarmentTypeService(GarmentTypeServiceInterface):
         return result
 
     async def get_by_id(self, id: int) -> GarmentTypeOut:
+        """Retrieve a garment type by its ID."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(GarmentTypeRepositoryInterface)
             
@@ -43,6 +45,7 @@ class GarmentTypeService(GarmentTypeServiceInterface):
         return result
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> list[GarmentTypeOut]:
+        """Retrieve a paginated list of garment types."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(GarmentTypeRepositoryInterface)
             
@@ -52,6 +55,7 @@ class GarmentTypeService(GarmentTypeServiceInterface):
         return result
 
     async def update(self, id: int, update_data: UpdateGarmentType) -> GarmentTypeOut:
+        """Update an existing garment type."""
         logger.info("updating_garment_type", garment_type_id=id)
         
         async with self._uow as uow:
@@ -73,6 +77,7 @@ class GarmentTypeService(GarmentTypeServiceInterface):
         return result
 
     async def delete(self, id: int) -> bool:
+        """Delete a garment type by its ID."""
         logger.info("deleting_garment_type", garment_type_id=id)
         
         async with self._uow as uow:

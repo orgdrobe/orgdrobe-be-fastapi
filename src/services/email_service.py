@@ -29,6 +29,7 @@ class EmailService(EmailServiceInterface):
         self.config = config or EmailServiceConfig()
 
     async def send_verification_email(self, user_email: str, code: str) -> None:
+        """Send an HTML email containing the 6-digit registration verification code."""
         message = MessageSchema(
             subject="Your verification code",
             recipients=[NameEmail(name="", email=user_email)],
@@ -38,6 +39,7 @@ class EmailService(EmailServiceInterface):
         await self._fm.send_message(message)
 
     async def send_forgot_password_email(self, user_email: str, reset_token: str) -> None:
+        """Send an HTML email containing the password reset link with secure token."""
         frontend_url = f"{self.config.frontend_url}/reset-password"
         reset_link = f"{frontend_url}?token={reset_token}"
 
@@ -49,7 +51,8 @@ class EmailService(EmailServiceInterface):
         )
         await self._fm.send_message(message)
 
-    def _get_forgot_password_template(self, reset_link: str):
+    def _get_forgot_password_template(self, reset_link: str) -> str:
+        """Render HTML email template for password reset."""
         return f"""
         <html>
             <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f7; color: #51545e;">
@@ -96,6 +99,7 @@ class EmailService(EmailServiceInterface):
         """
 
     def _get_verification_template(self, code: str) -> str:
+        """Render HTML email template for account verification code."""
         return f"""
         <html>
             <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f7; color: #51545e;">

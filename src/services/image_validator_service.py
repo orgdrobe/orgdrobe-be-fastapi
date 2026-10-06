@@ -66,6 +66,7 @@ class ImageValidatorService(ImageValidatorServiceInterface):
         max_size_bytes: int | None = None,
         max_dimension: int | None = None,
     ) -> ValidatedImage:
+        """Validate uploaded file, check size and format, normalize, and encode to WebP."""
         effective_max_size = max_size_bytes or self.max_file_size_bytes
 
         if file.size is not None and file.size > effective_max_size:
@@ -91,6 +92,7 @@ class ImageValidatorService(ImageValidatorServiceInterface):
         max_size_bytes: int | None = None,
         max_dimension: int | None = None,
     ) -> ValidatedImage:
+        """Validate in-memory image bytes, check integrity/dimensions, and encode to WebP."""
         effective_max_size = max_size_bytes or self.max_file_size_bytes
         effective_max_dimension = max_dimension or self.max_dimension
 
@@ -116,6 +118,7 @@ class ImageValidatorService(ImageValidatorServiceInterface):
         )
 
     def _validate_payload_size(self, content: bytes, max_size: int) -> None:
+        """Check that file bytes size is non-empty and does not exceed maximum limit."""
         actual_size = len(content)
         if actual_size == 0:
             raise CorruptedImage("Image file is empty")
@@ -127,6 +130,7 @@ class ImageValidatorService(ImageValidatorServiceInterface):
             )
 
     def _validate_mime_type(self, content: bytes) -> None:
+        """Inspect magic bytes to ensure MIME type is within allowed types."""
         header = content[:1024]
         kind = filetype.guess(header)
 
@@ -137,6 +141,7 @@ class ImageValidatorService(ImageValidatorServiceInterface):
             )
 
     def _verify_image_integrity(self, content: bytes) -> None:
+        """Verify image structural integrity and protect against decompression bombs."""
         Image.MAX_IMAGE_PIXELS = self.max_image_pixels
         try:
             with Image.open(io.BytesIO(content)) as raw_img:
@@ -149,6 +154,7 @@ class ImageValidatorService(ImageValidatorServiceInterface):
     def _transform_and_encode(
         self, content: bytes, max_dimension: int
     ) -> tuple[bytes, int, int]:
+        """Apply EXIF orientation, convert color mode, downscale if needed, and save to WebP."""
         try:
             with Image.open(io.BytesIO(content)) as raw_img:
                 img = ImageOps.exif_transpose(raw_img) or raw_img.copy()
@@ -169,6 +175,7 @@ class ImageValidatorService(ImageValidatorServiceInterface):
 
     @staticmethod
     def _normalize_color_mode(img: Image.Image) -> Image.Image:
+        """Normalize image to RGBA (if transparency present) or RGB mode."""
         has_transparency = img.mode in ("RGBA", "LA") or (
             img.mode == "P" and "transparency" in img.info
         )
@@ -180,10 +187,12 @@ class ImageValidatorService(ImageValidatorServiceInterface):
 
     @staticmethod
     def _downscale_if_needed(img: Image.Image, max_dimension: int) -> None:
+        """Downscale image proportionally if width or height exceeds maximum dimension."""
         if img.width > max_dimension or img.height > max_dimension:
             img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
 
     def _encode_to_webp(self, img: Image.Image) -> bytes:
+        """Encode Pillow Image to WebP format with configured quality."""
         output_buffer = io.BytesIO()
         img.save(
             output_buffer,

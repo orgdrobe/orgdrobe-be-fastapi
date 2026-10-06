@@ -14,6 +14,7 @@ class UsageService(UsageServiceInterface):
         self._uow = uow 
 
     async def create(self, new_usage: NewUsage) -> UsageOut:
+        """Create a new usage entry."""
         logger.info("creating_usage", name=new_usage.name)
         
         async with self._uow as uow:
@@ -31,6 +32,7 @@ class UsageService(UsageServiceInterface):
         return result
 
     async def get_by_id(self, id: int) -> UsageOut:
+        """Retrieve a usage entry by its ID."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(UsageRepositoryInterface)
             
@@ -43,6 +45,7 @@ class UsageService(UsageServiceInterface):
         return result
 
     async def get_all(self, skip: int = 0, limit: int = 100) -> list[UsageOut]:
+        """Retrieve a paginated list of usage entries."""
         async with self._uow as uow:
             repo = uow.get_repo_by_interface(UsageRepositoryInterface)
             
@@ -52,6 +55,7 @@ class UsageService(UsageServiceInterface):
         return result
 
     async def update(self, id: int, update_data: UpdateUsage) -> UsageOut:
+        """Update an existing usage entry."""
         logger.info("updating_usage", usage_id=id)
         
         async with self._uow as uow:
@@ -73,6 +77,7 @@ class UsageService(UsageServiceInterface):
         return result
 
     async def delete(self, id: int) -> bool:
+        """Delete a usage entry by its ID."""
         logger.info("deleting_usage", usage_id=id)
         
         async with self._uow as uow:
