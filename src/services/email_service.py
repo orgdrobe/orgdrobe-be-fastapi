@@ -1,24 +1,44 @@
+from dataclasses import dataclass, field
+
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from fastapi_mail.schemas import NameEmail
 
 from core.configs import application_config
 from services.interfaces import EmailServiceInterface
 
+
+@dataclass
+class EmailServiceConfig:
+    """Configuration parameters for email templates and frontend links."""
+
+    frontend_url: str = field(
+        default_factory=lambda: str(application_config.FRONTEND_URL).rstrip("/")
+    )
+
+    def __post_init__(self) -> None:
+        self.frontend_url = str(self.frontend_url).rstrip("/")
+
+
 class EmailService(EmailServiceInterface):
-    def __init__(self, connection_config: ConnectionConfig):
+    def __init__(
+        self,
+        connection_config: ConnectionConfig,
+        config: EmailServiceConfig | None = None,
+    ) -> None:
         self._fm = FastMail(connection_config)
+        self.config = config or EmailServiceConfig()
 
     async def send_verification_email(self, user_email: str, code: str) -> None:
         message = MessageSchema(
             subject="Your verification code",
             recipients=[NameEmail(name="", email=user_email)],
             body=self._get_verification_template(code),
-            subtype=MessageType.html
+            subtype=MessageType.html,
         )
         await self._fm.send_message(message)
 
     async def send_forgot_password_email(self, user_email: str, reset_token: str) -> None:
-        frontend_url = f"{application_config.FRONTEND_URL}/reset-password"
+        frontend_url = f"{self.config.frontend_url}/reset-password"
         reset_link = f"{frontend_url}?token={reset_token}"
 
         message = MessageSchema(

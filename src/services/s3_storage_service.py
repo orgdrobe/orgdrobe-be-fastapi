@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import aioboto3
 from botocore.config import Config
@@ -16,25 +16,23 @@ from services.interfaces.s3_storage_service_interface import (
 class S3ConnectionConfig:
     """Configuration parameters for S3 client connections with fallback to s3_config."""
 
-    endpoint_url: str | AnyHttpUrl | None = None
-    public_endpoint_url: str | AnyHttpUrl | None = None
-    access_key: str | None = None
-    secret_key: str | None = None
-    default_bucket: str | None = None
-    default_ttl_seconds: int | None = None
+    endpoint_url: str = field(
+        default_factory=lambda: str(s3_config.ENDPOINT_URL).rstrip("/")
+    )
+    public_endpoint_url: str = field(
+        default_factory=lambda: str(s3_config.PUBLIC_ENDPOINT_URL).rstrip("/")
+    )
+    access_key: str = field(default_factory=lambda: s3_config.ACCESS_KEY)
+    secret_key: str = field(default_factory=lambda: s3_config.SECRET_KEY)
+    default_bucket: str = field(default_factory=lambda: s3_config.BUCKET_NAME)
+    default_ttl_seconds: int = field(
+        default_factory=lambda: s3_config.PRESIGNED_URL_TTL_SECONDS
+    )
     region_name: str = "us-east-1"
 
     def __post_init__(self) -> None:
-        self.endpoint_url = str(self.endpoint_url or s3_config.ENDPOINT_URL).rstrip("/")
-        self.public_endpoint_url = str(
-            self.public_endpoint_url or s3_config.PUBLIC_ENDPOINT_URL
-        ).rstrip("/")
-        self.access_key = self.access_key or s3_config.ACCESS_KEY
-        self.secret_key = self.secret_key or s3_config.SECRET_KEY
-        self.default_bucket = self.default_bucket or s3_config.BUCKET_NAME
-        self.default_ttl_seconds = (
-            self.default_ttl_seconds or s3_config.PRESIGNED_URL_TTL_SECONDS
-        )
+        self.endpoint_url = str(self.endpoint_url).rstrip("/")
+        self.public_endpoint_url = str(self.public_endpoint_url).rstrip("/")
 
 
 class S3StorageService(S3StorageServiceInterface):

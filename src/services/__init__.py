@@ -1,6 +1,6 @@
-from .auth_service import AuthService
-from .email_service import EmailService
-from .cache_service import CacheService
+from .auth_service import AuthService, AuthConfig
+from .email_service import EmailService, EmailServiceConfig
+from .cache_service import CacheService, CacheConfig
 from .garment_service import GarmentService
 from .outfit_service import OutfitService
 from .master_category_service import MasterCategoryService
@@ -10,6 +10,6 @@ from .gender_service import GenderService
 from .season_service import SeasonService
 from .usage_service import UsageService
 from .color_service import ColorService
-from .image_validator_service import ImageValidatorService
+from .image_validator_service import ImageValidatorService, ImageValidatorConfig
 from .s3_storage_service import S3StorageService, S3ConnectionConfig
 from .unit_of_work import SqlAlchemyUnitOfWork

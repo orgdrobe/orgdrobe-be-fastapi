@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Any
 
 from cashews import cache
@@ -5,13 +6,25 @@ from cashews import cache
 from services.interfaces import CacheServiceInterface
 # ATTENTION: In‑memory cache does not work in multi‑worker applications (use Redis).
 
-class CacheService(CacheServiceInterface):
-    def __init__(self, backend_url: str = "mem://", default_prefix: str = "app", default_ttl: int = 300) -> None:
-        if not cache.is_setup():
-            cache.setup(backend_url)
 
-        self._prefix = default_prefix
-        self._default_ttl = default_ttl
+@dataclass
+class CacheConfig:
+    """Configuration parameters for cache backend and operations."""
+
+    backend_url: str = "mem://"
+    default_prefix: str = "app"
+    default_ttl: int = 300
+
+
+class CacheService(CacheServiceInterface):
+    def __init__(self, config: CacheConfig | None = None) -> None:
+        self.config = config or CacheConfig()
+
+        if not cache.is_setup():
+            cache.setup(self.config.backend_url)
+
+        self._prefix = self.config.default_prefix
+        self._default_ttl = self.config.default_ttl
 
     def _build_key(self, key: str) -> str:
         return f"{self._prefix}:{key}"

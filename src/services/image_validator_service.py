@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import io
 from typing import Sequence
 
@@ -17,33 +18,47 @@ from services.interfaces.image_validator_service_interface import (
 )
 
 
-class ImageValidatorService(ImageValidatorServiceInterface):
-    DEFAULT_MAX_FILE_SIZE_BYTES: int = 5 * 1024 * 1024  # 5 MB
-    DEFAULT_MAX_DIMENSION: int = 2560  # 2560 px
-    DEFAULT_MAX_IMAGE_PIXELS: int = 20_000_000  # 20 Mpx
-    DEFAULT_WEBP_QUALITY: int = 85
-    DEFAULT_ALLOWED_MIME_TYPES: tuple[str, ...] = (
+@dataclass
+class ImageValidatorConfig:
+    """Configuration parameters for image validation and normalization."""
+
+    max_file_size_bytes: int = 5 * 1024 * 1024  # 5 MB
+    max_dimension: int = 2560  # 2560 px
+    max_image_pixels: int = 20_000_000  # 20 Mpx
+    webp_quality: int = 85
+    allowed_mime_types: tuple[str, ...] = (
         "image/webp",
         "image/jpeg",
         "image/png",
     )
 
-    def __init__(
-        self,
-        max_file_size_bytes: int = DEFAULT_MAX_FILE_SIZE_BYTES,
-        max_dimension: int = DEFAULT_MAX_DIMENSION,
-        max_image_pixels: int = DEFAULT_MAX_IMAGE_PIXELS,
-        webp_quality: int = DEFAULT_WEBP_QUALITY,
-        allowed_mime_types: Sequence[str] = DEFAULT_ALLOWED_MIME_TYPES,
-    ) -> None:
-        self.max_file_size_bytes = max_file_size_bytes
-        self.max_dimension = max_dimension
-        self.max_image_pixels = max_image_pixels
-        self.webp_quality = webp_quality
-        self.allowed_mime_types = list(allowed_mime_types)
+
+class ImageValidatorService(ImageValidatorServiceInterface):
+    def __init__(self, config: ImageValidatorConfig | None = None) -> None:
+        self.config = config or ImageValidatorConfig()
 
         # Set safety limit on Pillow for decompression bomb prevention
-        Image.MAX_IMAGE_PIXELS = self.max_image_pixels
+        Image.MAX_IMAGE_PIXELS = self.config.max_image_pixels
+
+    @property
+    def max_file_size_bytes(self) -> int:
+        return self.config.max_file_size_bytes
+
+    @property
+    def max_dimension(self) -> int:
+        return self.config.max_dimension
+
+    @property
+    def max_image_pixels(self) -> int:
+        return self.config.max_image_pixels
+
+    @property
+    def webp_quality(self) -> int:
+        return self.config.webp_quality
+
+    @property
+    def allowed_mime_types(self) -> tuple[str, ...]:
+        return self.config.allowed_mime_types
 
     async def validate_and_process(
         self,

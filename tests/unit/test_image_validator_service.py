@@ -8,7 +8,10 @@ from core.exceptions.image_exceptions import (
     ImageFileTooLarge,
     InvalidImageFormat,
 )
-from services.image_validator_service import ImageValidatorService
+from services.image_validator_service import (
+    ImageValidatorConfig,
+    ImageValidatorService,
+)
 
 
 def _create_test_image(
@@ -24,12 +27,13 @@ def _create_test_image(
 
 @pytest.fixture
 def image_validator() -> ImageValidatorService:
-    return ImageValidatorService(
+    config = ImageValidatorConfig(
         max_file_size_bytes=2 * 1024 * 1024,  # 2 MB for tests
         max_dimension=1000,
         max_image_pixels=5_000_000,
         webp_quality=80,
     )
+    return ImageValidatorService(config=config)
 
 
 def test_validate_and_process_png_success(image_validator: ImageValidatorService):

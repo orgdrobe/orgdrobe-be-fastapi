@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 import secrets
 from uuid import UUID
 from typing import Optional, Any
@@ -26,11 +27,36 @@ from models import User, UserIdentity, UserRole, RefreshToken
 
 logger = structlog.get_logger()
 
+
+@dataclass
+class AuthConfig:
+    """Configuration parameters for JWT tokens and authentication."""
+
+    secret_key: str = field(default_factory=lambda: jwt_config.SECRET_KEY)
+    algorithm: str = field(default_factory=lambda: jwt_config.ALGORITHM)
+    access_token_expire_minutes: int = field(
+        default_factory=lambda: jwt_config.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    refresh_token_expire_days: int = field(
+        default_factory=lambda: jwt_config.REFRESH_TOKEN_EXPIRE_DAYS
+    )
+    reset_email_token_expire_minutes: int = field(
+        default_factory=lambda: jwt_config.RESET_EMAIL_TOKEN_EXPIRE_MINUTES
+    )
+
+
 class AuthService(AuthServiceInterface):
-    def __init__(self, uow: UnitOfWorkInterface, cache_service: CacheServiceInterface, pwd_context: CryptContext) -> None:
+    def __init__(
+        self,
+        uow: UnitOfWorkInterface,
+        cache_service: CacheServiceInterface,
+        pwd_context: CryptContext,
+        config: AuthConfig | None = None,
+    ) -> None:
         self._uow = uow 
         self._cache_service = cache_service
         self._pwd_context = pwd_context
+        self.config = config or AuthConfig()
 
     async def register_user(self, new_user: UserRegister) -> UserRegisterOut: 
         logger.info("user_registration_attempt", email=new_user.email, username=new_user.username)
@@ -104,10 +130,10 @@ class AuthService(AuthServiceInterface):
                 user_roles.append(role.name)
 
             access_payload = {"sub": str(user_identity.user.id), "roles": user_roles}
-            access_token = self._create_access_token(access_payload, expires_delta=timedelta(minutes=jwt_config.ACCESS_TOKEN_EXPIRE_MINUTES))
+            access_token = self._create_access_token(access_payload, expires_delta=timedelta(minutes=self.config.access_token_expire_minutes))
 
             jti = self._create_refresh_token_jti()
-            rt_payload = self._create_refresh_token_payload(jti, expires_delta=timedelta(days=jwt_config.REFRESH_TOKEN_EXPIRE_DAYS))
+            rt_payload = self._create_refresh_token_payload(jti, expires_delta=timedelta(days=self.config.refresh_token_expire_days))
 
             rt = RefreshToken(
                 jti=jti,
@@ -117,13 +143,13 @@ class AuthService(AuthServiceInterface):
             )
             
             await refresh_token_repository.add(rt)
-            refresh_token = jwt.encode(rt_payload.copy(), jwt_config.SECRET_KEY, algorithm=jwt_config.ALGORITHM)
+            refresh_token = jwt.encode(rt_payload.copy(), self.config.secret_key, algorithm=self.config.algorithm)
             
             await uow.commit()
             result = UserLoginOut(
                 access_token=access_token, 
                 token_type="bearer",
-                expires_in=jwt_config.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+                expires_in=self.config.access_token_expire_minutes * 60
             )
 
             logger.info("user_logged_in_successfully", user_id=user_identity.user.id, rt_jti=jti)
@@ -156,7 +182,7 @@ class AuthService(AuthServiceInterface):
             rt.revoked = True
             
             new_jti = self._create_refresh_token_jti()
-            new_rt_payload = self._create_refresh_token_payload(new_jti, expires_delta=timedelta(days=jwt_config.REFRESH_TOKEN_EXPIRE_DAYS))
+            new_rt_payload = self._create_refresh_token_payload(new_jti, expires_delta=timedelta(days=self.config.refresh_token_expire_days))
 
             new_rt = RefreshToken(
                 jti=new_jti,
@@ -166,20 +192,20 @@ class AuthService(AuthServiceInterface):
             )
             await refresh_token_repository.add(new_rt)
 
-            new_refresh_token = jwt.encode(new_rt_payload.copy(), jwt_config.SECRET_KEY, algorithm=jwt_config.ALGORITHM)
+            new_refresh_token = jwt.encode(new_rt_payload.copy(), self.config.secret_key, algorithm=self.config.algorithm)
 
             user_roles = []
             for role in rt.user.roles:
                 user_roles.append(role.name)
 
             new_access_payload = {"sub": str(rt.user.id), "roles": user_roles}
-            new_access_token = self._create_access_token(new_access_payload, expires_delta=timedelta(minutes=jwt_config.ACCESS_TOKEN_EXPIRE_MINUTES))
+            new_access_token = self._create_access_token(new_access_payload, expires_delta=timedelta(minutes=self.config.access_token_expire_minutes))
 
             await uow.commit()
             result = UserLoginOut(
                 access_token=new_access_token, 
                 token_type="bearer",
-                expires_in=jwt_config.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+                expires_in=self.config.access_token_expire_minutes * 60
             )
 
             logger.info("tokens_refreshed_successfully", old_jti=jti, new_jti=new_jti)
@@ -221,7 +247,7 @@ class AuthService(AuthServiceInterface):
                 return None
             
             reset_payload = {"sub": str(user_identity.user_id)}
-            reset_token = self._create_access_token(reset_payload, expires_delta=timedelta(minutes=jwt_config.RESET_EMAIL_TOKEN_EXPIRE_MINUTES))
+            reset_token = self._create_access_token(reset_payload, expires_delta=timedelta(minutes=self.config.reset_email_token_expire_minutes))
 
             await self._cache_service.set(reset_token_key, reset_token, ttl="15m")
 
@@ -363,14 +389,14 @@ class AuthService(AuthServiceInterface):
         if expires_delta:
             expire = now + expires_delta
         else:
-            expire = now + timedelta(minutes=jwt_config.ACCESS_TOKEN_EXPIRE_MINUTES)
+            expire = now + timedelta(minutes=self.config.access_token_expire_minutes)
 
         to_encode.update({
             "exp": expire,
             "iat": now, 
             "type": "access"
         })
-        return jwt.encode(to_encode, jwt_config.SECRET_KEY, algorithm=jwt_config.ALGORITHM)
+        return jwt.encode(to_encode, self.config.secret_key, algorithm=self.config.algorithm)
     
     def _create_refresh_token_jti(self):
         return str(uuid6.uuid7())
@@ -381,7 +407,7 @@ class AuthService(AuthServiceInterface):
         if expires_delta:
             expire = now + expires_delta
         else:
-            expire = now + timedelta(days=jwt_config.REFRESH_TOKEN_EXPIRE_DAYS)
+            expire = now + timedelta(days=self.config.refresh_token_expire_days)
             
         return {
             "jti": jti, 
@@ -392,7 +418,11 @@ class AuthService(AuthServiceInterface):
     
     def _decode_token(self, token: str) -> dict[str,Any] | None:
         try:
-            payload = jwt.decode(token, jwt_config.SECRET_KEY, jwt_config.ALGORITHM)
+            payload = jwt.decode(
+                token,
+                self.config.secret_key,
+                algorithms=[self.config.algorithm],
+            )
             return payload
         except PyJWTError:
             return None
