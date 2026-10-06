@@ -12,5 +12,6 @@ from .usage_service import get_usage_service
 from .color_service import get_color_service
 from .garment_service import get_garment_service
 from .outfit_service import get_outfit_service
-from .unit_of_work import get_unit_of_work
 from .image_validator_service import get_image_validator_service
+from .s3_storage_service import get_s3_storage_service
+from .unit_of_work import get_unit_of_work

@@ -12,3 +12,4 @@ from .usage_service_interface import UsageServiceInterface
 from .color_service_interface import ColorServiceInterface
 from .unit_of_work_interface import UnitOfWorkInterface
 from .image_validator_service_interface import ImageValidatorServiceInterface
+from .s3_storage_service_interface import S3StorageServiceInterface
