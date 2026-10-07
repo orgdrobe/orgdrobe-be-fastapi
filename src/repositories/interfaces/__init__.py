@@ -13,3 +13,6 @@ from .season_repo_interface import SeasonRepositoryInterface
 from .usage_repo_interface import UsageRepositoryInterface
 from .color_repo_interface import ColorRepositoryInterface
 from .generic_repo_interface import GenericRepositoryInterface
+from .user_avatar_repo_interface import UserAvatarRepositoryInterface
+from .garment_image_repo_interface import GarmentImageRepositoryInterface
+from .outfit_image_repo_interface import OutfitImageRepositoryInterface

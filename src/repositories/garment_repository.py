@@ -86,4 +86,5 @@ class GarmentRepository(GarmentRepositoryInterface):
             selectinload(Garment.season),
             selectinload(Garment.usage),
             selectinload(Garment.colors).joinedload(GarmentColor.color),
+            selectinload(Garment.images),
         ]

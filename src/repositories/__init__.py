@@ -13,3 +13,6 @@ from .season_repository import SeasonRepository
 from .usage_repository import UsageRepository
 from .color_repository import ColorRepository
 from .generic_repository import GenericRepository
+from .user_avatar_repository import UserAvatarRepository
+from .garment_image_repository import GarmentImageRepository
+from .outfit_image_repository import OutfitImageRepository

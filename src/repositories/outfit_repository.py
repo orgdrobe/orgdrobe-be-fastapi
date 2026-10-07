@@ -78,4 +78,5 @@ class OutfitRepository(OutfitRepositoryInterface):
                 selectinload(Garment.colors).joinedload(GarmentColor.color),
             ),
             selectinload(Outfit.colors).joinedload(OutfitColor.color),
+            selectinload(Outfit.images),
         ]

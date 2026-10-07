@@ -6,13 +6,19 @@ from repositories import (UserRepository, UserIdentityRepository, UserRoleReposi
                           CategorySubRepository, GarmentTypeRepository, GenderRepository,
                           SeasonRepository, UsageRepository, ColorRepository,
                           GarmentRepository,
-                          OutfitRepository)
+                          OutfitRepository,
+                          UserAvatarRepository,
+                          GarmentImageRepository,
+                          OutfitImageRepository)
 from repositories.interfaces import (UserIdentityRepositoryInterface, UserRepositoryInterface, RoleRepositoryInterface,
                                      UserRoleRepositoryInterface, RefreshTokenRepositoryInterface, CategoryMasterRepositoryInterface,
                                      CategorySubRepositoryInterface, GarmentTypeRepositoryInterface, GenderRepositoryInterface,
                                      SeasonRepositoryInterface, UsageRepositoryInterface, ColorRepositoryInterface,
                                      GarmentRepositoryInterface,
-                                     OutfitRepositoryInterface)
+                                     OutfitRepositoryInterface,
+                                     UserAvatarRepositoryInterface,
+                                     GarmentImageRepositoryInterface,
+                                     OutfitImageRepositoryInterface)
 
 
 def get_unit_of_work() -> UnitOfWorkInterface:
@@ -33,5 +39,8 @@ def get_unit_of_work() -> UnitOfWorkInterface:
     unit_of_work.register_factory_by_interface(ColorRepositoryInterface, lambda session: ColorRepository(session))
     unit_of_work.register_factory_by_interface(GarmentRepositoryInterface, lambda session: GarmentRepository(session))
     unit_of_work.register_factory_by_interface(OutfitRepositoryInterface, lambda session: OutfitRepository(session))
+    unit_of_work.register_factory_by_interface(UserAvatarRepositoryInterface, lambda session: UserAvatarRepository(session))
+    unit_of_work.register_factory_by_interface(GarmentImageRepositoryInterface, lambda session: GarmentImageRepository(session))
+    unit_of_work.register_factory_by_interface(OutfitImageRepositoryInterface, lambda session: OutfitImageRepository(session))
 
     return unit_of_work
