@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 
 from sqlalchemy import String, DateTime, Boolean, text
@@ -8,7 +8,7 @@ from .base import ModelBase
 
 if TYPE_CHECKING:
     from models import (UserIdentity, Role, UserRole, 
-                        RefreshToken, Garment, Outfit)
+                        RefreshToken, Garment, Outfit, UserAvatar)
 
 class User(ModelBase):
     __tablename__ = "users"
@@ -34,6 +34,13 @@ class User(ModelBase):
 
     garments: Mapped[list["Garment"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     outfits: Mapped[list["Outfit"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
+    avatar: Mapped[Optional["UserAvatar"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
+        lazy="selectin",
+    )
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text('now()'))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text('now()'), onupdate=text('now()'))

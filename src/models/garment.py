@@ -1,7 +1,7 @@
 from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 
-from sqlalchemy import String, Text, ForeignKey, DateTime, text, Boolean
+from sqlalchemy import String, Text, ForeignKey, DateTime, text, Boolean, Integer
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 from .base import ModelBase
@@ -41,6 +41,13 @@ class Garment(ModelBase):
 
     colors: Mapped[list["GarmentColor"]] = relationship(back_populates="garment", cascade="all, delete-orphan", lazy="selectin")
 
+    images: Mapped[list["GarmentImage"]] = relationship(
+        back_populates="garment",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="GarmentImage.order",
+    )
+
     outfits: Mapped[list["Outfit"]] = relationship(
         secondary="outfit_garments",
         back_populates="garments",
@@ -49,6 +56,24 @@ class Garment(ModelBase):
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text('now()'))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text('now()'), onupdate=text('now()'))
+
+
+class GarmentImage(ModelBase):
+    __tablename__ = "garment_images"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    image_key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    is_primary: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    garment_id: Mapped[int] = mapped_column(
+        ForeignKey("garments.id", ondelete="CASCADE"), nullable=False, index=True
+        )
+    garment: Mapped["Garment"] = relationship(back_populates="images")
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=text("now()")
+    )
 
 
 class GarmentColor(ModelBase):
