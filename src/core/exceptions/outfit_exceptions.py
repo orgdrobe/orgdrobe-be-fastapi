@@ -22,3 +22,14 @@ class OutfitNameAlreadyExists(BaseAPIException):
         )
 
 
+class OutfitImageNotFound(BaseAPIException):
+    status_code = 404
+    code = ErrorCode.OUTFIT_IMAGE_NOT_FOUND
+
+    def __init__(self, id: int):
+        super().__init__(
+            message=f"Outfit image with id {id} not found",
+            details={"field": "image_id", "value": id}
+        )
+
+

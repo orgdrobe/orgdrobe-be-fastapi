@@ -14,4 +14,6 @@ from .garment_service import get_garment_service
 from .outfit_service import get_outfit_service
 from .image_validator_service import get_image_validator_service
 from .s3_storage_service import get_s3_storage_service
+from .media_service import get_media_service
+from .user_service import get_user_service
 from .unit_of_work import get_unit_of_work

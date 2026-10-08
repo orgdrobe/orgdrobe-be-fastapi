@@ -1,7 +1,8 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 
-from schemas.outfit import NewOutfit, OutfitOut, UpdateOutfit
+from schemas.outfit import NewOutfit, OutfitImageOut, OutfitOut, UpdateOutfit
+from schemas.media import BatchDeleteImagesRequest
 from services.interfaces import OutfitServiceInterface
 from schemas.errors import ErrorResponse
 from dependencies import get_outfit_service, get_current_user
@@ -91,6 +92,99 @@ async def delete_outfit(
     current_user: Annotated[User, Depends(get_current_user)]
 ) -> None:
     await outfit_service.delete(user_id=current_user.id, id=id)
+
+
+@router.post(
+    "/{id}/images",
+    response_model=OutfitImageOut,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid image or corrupted"},
+        404: {"model": ErrorResponse, "description": "Outfit not found"},
+        413: {"model": ErrorResponse, "description": "Image file too large"},
+        415: {"model": ErrorResponse, "description": "Unsupported image format"},
+    },
+)
+async def upload_outfit_image(
+    id: int,
+    file: Annotated[UploadFile, File(description="Image file (JPEG, PNG, WebP)")],
+    outfit_service: Annotated[OutfitServiceInterface, Depends(get_outfit_service)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    is_primary: Annotated[bool, Form(description="Whether this is the primary image")] = False,
+    order: Annotated[int, Form(description="Display order")] = 0,
+) -> OutfitImageOut:
+    return await outfit_service.add_image(
+        user_id=current_user.id,
+        outfit_id=id,
+        file=file,
+        is_primary=is_primary,
+        order=order,
+    )
+
+
+@router.post(
+    "/{id}/images/batch",
+    response_model=list[OutfitImageOut],
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid image or corrupted"},
+        404: {"model": ErrorResponse, "description": "Outfit not found"},
+        413: {"model": ErrorResponse, "description": "Image file too large"},
+        415: {"model": ErrorResponse, "description": "Unsupported image format"},
+    },
+)
+async def upload_outfit_images_batch(
+    id: int,
+    files: Annotated[list[UploadFile], File(description="List of image files (JPEG, PNG, WebP)")],
+    outfit_service: Annotated[OutfitServiceInterface, Depends(get_outfit_service)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> list[OutfitImageOut]:
+    return await outfit_service.add_images_batch(
+        user_id=current_user.id,
+        outfit_id=id,
+        files=files,
+    )
+
+
+@router.delete(
+    "/{id}/images/batch",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        404: {"model": ErrorResponse, "description": "Outfit or image not found"},
+    },
+)
+async def delete_outfit_images_batch(
+    id: int,
+    body: BatchDeleteImagesRequest,
+    outfit_service: Annotated[OutfitServiceInterface, Depends(get_outfit_service)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> None:
+    await outfit_service.delete_images_batch(
+        user_id=current_user.id,
+        outfit_id=id,
+        image_ids=body.image_ids,
+    )
+
+
+@router.delete(
+    "/{id}/images/{image_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        404: {"model": ErrorResponse, "description": "Outfit or image not found"},
+    },
+)
+async def delete_outfit_image(
+    id: int,
+    image_id: int,
+    outfit_service: Annotated[OutfitServiceInterface, Depends(get_outfit_service)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> None:
+    await outfit_service.delete_image(
+        user_id=current_user.id,
+        outfit_id=id,
+        image_id=image_id,
+    )
+
 
 
 # --- Outfit Garments (Non-CRUD - currently commented out) ---

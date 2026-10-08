@@ -1,6 +1,12 @@
 from abc import ABC, abstractmethod
+from fastapi import UploadFile
 
-from schemas.garment import GarmentOut, NewGarment, UpdateGarment
+from schemas.garment import (
+    GarmentImageOut,
+    GarmentOut,
+    NewGarment,
+    UpdateGarment,
+)
 
 
 class GarmentServiceInterface(ABC):
@@ -34,3 +40,44 @@ class GarmentServiceInterface(ABC):
     async def delete(self, user_id: int, id: int) -> bool:
         """Delete a garment item owned by the user."""
         ...
+
+    @abstractmethod
+    async def add_image(
+        self,
+        user_id: int,
+        garment_id: int,
+        file: UploadFile,
+        is_primary: bool = False,
+        order: int = 0,
+    ) -> GarmentImageOut:
+        """Upload, validate, and associate an image with an existing user garment."""
+        ...
+
+    @abstractmethod
+    async def delete_image(
+        self, user_id: int, garment_id: int, image_id: int
+    ) -> bool:
+        """Remove a garment image from storage, cache, and database."""
+        ...
+
+    @abstractmethod
+    async def add_images_batch(
+        self,
+        user_id: int,
+        garment_id: int,
+        files: list[UploadFile],
+    ) -> list[GarmentImageOut]:
+        """Upload, validate, and associate multiple images with a garment in batch."""
+        ...
+
+    @abstractmethod
+    async def delete_images_batch(
+        self,
+        user_id: int,
+        garment_id: int,
+        image_ids: list[int],
+    ) -> bool:
+        """Remove multiple garment images from storage, cache, and database in batch."""
+        ...
+
+

@@ -1,35 +1,62 @@
-from fastapi import APIRouter
+from typing import Annotated
+from fastapi import APIRouter, Depends, File, UploadFile, status
+
+from dependencies import get_current_user, get_user_service
+from models import User
+from schemas.errors import ErrorResponse
+from schemas.user import UserAvatarOut
+from services.interfaces import UserServiceInterface
 
 router = APIRouter()
 
-from pydantic import BaseModel
-class TempData(BaseModel):
-    pass
 
 @router.get("/test")
-def test_route() -> dict[str,str]:
+def test_route() -> dict[str, str]:
     return {"message": "Hello world!"}
 
-@router.post("/", response_model=TempData)
-async def create_user(payload: TempData, service: TempData):
-    return None
 
-@router.get("/", response_model=list[TempData])
-async def get_all_users(service: TempData, current_user: TempData):
-    return None
+@router.post(
+    "/me/avatar",
+    response_model=UserAvatarOut,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid image or corrupted"},
+        413: {"model": ErrorResponse, "description": "Image file too large"},
+        415: {"model": ErrorResponse, "description": "Unsupported image format"},
+    },
+)
+async def upload_my_avatar(
+    file: Annotated[UploadFile, File(description="Avatar image file (JPEG, PNG, WebP)")],
+    user_service: Annotated[UserServiceInterface, Depends(get_user_service)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> UserAvatarOut:
+    return await user_service.upload_avatar(
+        user_id=current_user.id,
+        file=file,
+    )
 
-@router.get("/users/me", response_model=TempData)
-async def get_user_mylesf(service: TempData, current_user: TempData):
-    return None
 
-@router.get("/{id}", response_model=TempData)
-async def get_user(user_id: int, service: TempData):
-    return None
+@router.get(
+    "/me/avatar",
+    response_model=UserAvatarOut | None,
+    status_code=status.HTTP_200_OK,
+)
+async def get_my_avatar(
+    user_service: Annotated[UserServiceInterface, Depends(get_user_service)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> UserAvatarOut | None:
+    return await user_service.get_avatar(user_id=current_user.id)
 
-@router.put("/{id}", response_model=TempData) # full update
-async def update_user(id: int, user_in: TempData, db: TempData, current_user: TempData):
-   return None 
 
-@router.delete("/{id}", response_model=TempData)
-async def delete_user(id: int, db: TempData, current_user: TempData):
-  return None
+@router.delete(
+    "/me/avatar",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        404: {"model": ErrorResponse, "description": "Avatar not found"},
+    },
+)
+async def delete_my_avatar(
+    user_service: Annotated[UserServiceInterface, Depends(get_user_service)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> None:
+    await user_service.delete_avatar(user_id=current_user.id)

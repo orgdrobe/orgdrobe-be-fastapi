@@ -53,3 +53,15 @@ class ImageDecompressionBomb(BaseAPIException):
             message=f"Image resolution exceeds allowed maximum of {max_pixels:,} pixels (possible decompression bomb)",
             details={"max_pixels": max_pixels},
         )
+
+
+class UserAvatarNotFound(BaseAPIException):
+    status_code = 404
+    code = ErrorCode.USER_AVATAR_NOT_FOUND
+
+    def __init__(self, user_id: int):
+        super().__init__(
+            message=f"Avatar for user with id {user_id} not found",
+            details={"field": "user_id", "value": user_id},
+        )
+

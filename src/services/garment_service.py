@@ -1,23 +1,40 @@
+import asyncio
 from typing import Any
 
+from fastapi import UploadFile
 import structlog
 
-from core.exceptions.garment_exceptions import GarmentNotFound, GarmentNameAlreadyExists
+from core.exceptions.garment_exceptions import (
+    GarmentNotFound,
+    GarmentNameAlreadyExists,
+    GarmentImageNotFound,
+)
 from core.exceptions.gender_exceptions import GenderNotFound
 from core.exceptions.category_exceptions import MasterCategoryNotFound, SubCategoryNotFound
 from core.exceptions.garment_type_exceptions import GarmentTypeNotFound
 from core.exceptions.season_exceptions import SeasonNotFound
 from core.exceptions.usage_exceptions import UsageNotFound
-from schemas.garment import NewGarment, UpdateGarment, GarmentOut, GarmentColorOut
+from schemas.garment import (
+    NewGarment,
+    UpdateGarment,
+    GarmentOut,
+    GarmentColorOut,
+    GarmentImageOut,
+)
 from schemas.gender import GenderOut
 from schemas.master_category import MasterCategoryOut
 from schemas.sub_category import SubCategoryOut
 from schemas.garment_type import GarmentTypeOut
 from schemas.season import SeasonOut
 from schemas.usage import UsageOut
-from services.interfaces import UnitOfWorkInterface, GarmentServiceInterface
+from services.interfaces import (
+    UnitOfWorkInterface,
+    GarmentServiceInterface,
+    MediaServiceInterface,
+)
 from repositories.interfaces import (
     GarmentRepositoryInterface,
+    GarmentImageRepositoryInterface,
     ColorRepositoryInterface,
     GenderRepositoryInterface,
     CategoryMasterRepositoryInterface,
@@ -29,6 +46,7 @@ from repositories.interfaces import (
 from models import (
     Garment,
     GarmentColor,
+    GarmentImage,
     Color,
     Gender,
     CategoryMaster,
@@ -41,8 +59,13 @@ from models import (
 logger = structlog.get_logger()
 
 class GarmentService(GarmentServiceInterface):
-    def __init__(self, uow: UnitOfWorkInterface) -> None:
-        self._uow = uow 
+    def __init__(
+        self,
+        uow: UnitOfWorkInterface,
+        media_service: MediaServiceInterface | None = None,
+    ) -> None:
+        self._uow = uow
+        self._media_service = media_service 
 
     async def _validate_and_get_foreign_keys(
         self,
@@ -175,7 +198,7 @@ class GarmentService(GarmentServiceInterface):
             garment = await garment_repository.add(garment)
             await uow.commit()
             
-            result = self._map_garment_to_out(garment)
+            result = await self._map_garment_to_out(garment)
             logger.info("garment_created_successfully", garment_id=result.id)
             
         return result
@@ -190,7 +213,7 @@ class GarmentService(GarmentServiceInterface):
                 logger.warning("garment_get_failed", reason="not_found_or_wrong_ownership", garment_id=id)
                 raise GarmentNotFound(id)
 
-            result = self._map_garment_to_out(garment)
+            result = await self._map_garment_to_out(garment)
             
         return result
 
@@ -200,7 +223,7 @@ class GarmentService(GarmentServiceInterface):
             garment_repository = uow.get_repo_by_interface(GarmentRepositoryInterface)
             
             garments = await garment_repository.get_all_by_user_id(user_id=user_id, skip=skip, limit=limit)
-            result = [self._map_garment_to_out(g) for g in garments]
+            result = [await self._map_garment_to_out(g) for g in garments]
             
         return result
 
@@ -265,13 +288,13 @@ class GarmentService(GarmentServiceInterface):
 
             await uow.commit()
             
-            result = self._map_garment_to_out(garment)
+            result = await self._map_garment_to_out(garment)
             logger.info("garment_updated_successfully", garment_id=result.id)
             
         return result
 
     async def delete(self, user_id: int, id: int) -> bool:
-        """Delete a user garment by ID."""
+        """Delete a user garment by ID and remove its images from media storage."""
         logger.info("deleting_garment", garment_id=id, user_id=user_id)
         
         async with self._uow as uow:
@@ -281,6 +304,10 @@ class GarmentService(GarmentServiceInterface):
             if not garment or garment.user_id != user_id:
                 logger.warning("garment_delete_failed", reason="not_found", garment_id=id)
                 raise GarmentNotFound(id)
+
+            if self._media_service and garment.images:
+                for img in garment.images:
+                    await self._media_service.delete_media(user_id=user_id, file_key=img.image_key)
                 
             is_deleted = await garment_repository.delete(id)
             if not is_deleted:
@@ -291,8 +318,190 @@ class GarmentService(GarmentServiceInterface):
             
         return True
 
-    def _map_garment_to_out(self, garment: Garment) -> GarmentOut:
-        """Convert Garment ORM model into GarmentOut schema."""
+    async def add_image(
+        self,
+        user_id: int,
+        garment_id: int,
+        file: UploadFile,
+        is_primary: bool = False,
+        order: int = 0,
+    ) -> GarmentImageOut:
+        """Upload, validate, and associate an image with an existing user garment."""
+        logger.info("adding_garment_image", user_id=user_id, garment_id=garment_id)
+        if not self._media_service:
+            raise RuntimeError("MediaService is not configured")
+
+        async with self._uow as uow:
+            garment_repo = uow.get_repo_by_interface(GarmentRepositoryInterface)
+            garment = await garment_repo.get_by_id(garment_id)
+            if not garment or garment.user_id != user_id:
+                logger.warning("garment_add_image_failed", reason="not_found_or_ownership", garment_id=garment_id)
+                raise GarmentNotFound(garment_id)
+
+            image_repo = uow.get_repo_by_interface(GarmentImageRepositoryInterface)
+            existing_images = await image_repo.get_by_garment_id(garment_id)
+
+            if is_primary:
+                for img in existing_images:
+                    if img.is_primary:
+                        await image_repo.update(img, {"is_primary": False})
+            elif not existing_images:
+                is_primary = True
+
+            uploaded = await self._media_service.upload_media(
+                file=file,
+                entity_type="garments",
+                entity_id=garment_id,
+                user_id=user_id,
+            )
+
+            new_image = GarmentImage(
+                garment_id=garment_id,
+                image_key=uploaded.file_key,
+                is_primary=is_primary,
+                order=order,
+            )
+            new_image = await image_repo.add(new_image)
+            await uow.commit()
+
+            return GarmentImageOut(
+                id=new_image.id,
+                garment_id=new_image.garment_id,
+                image_key=new_image.image_key,
+                url=uploaded.url,
+                is_primary=new_image.is_primary,
+                order=new_image.order,
+                created_at=new_image.created_at,
+            )
+
+    async def delete_image(
+        self, user_id: int, garment_id: int, image_id: int
+    ) -> bool:
+        """Remove a garment image from storage, cache, and database."""
+        logger.info("deleting_garment_image", user_id=user_id, garment_id=garment_id, image_id=image_id)
+        if not self._media_service:
+            raise RuntimeError("MediaService is not configured")
+
+        async with self._uow as uow:
+            garment_repo = uow.get_repo_by_interface(GarmentRepositoryInterface)
+            garment = await garment_repo.get_by_id(garment_id)
+            if not garment or garment.user_id != user_id:
+                raise GarmentNotFound(garment_id)
+
+            image_repo = uow.get_repo_by_interface(GarmentImageRepositoryInterface)
+            image = await image_repo.get_by_id(image_id)
+            if not image or image.garment_id != garment_id:
+                raise GarmentImageNotFound(image_id)
+
+            await self._media_service.delete_media(
+                user_id=user_id, file_key=image.image_key
+            )
+            await image_repo.delete(image_id)
+            await uow.commit()
+            return True
+
+    async def add_images_batch(
+        self, user_id: int, garment_id: int, files: list[UploadFile]
+    ) -> list[GarmentImageOut]:
+        """Upload, validate, and associate multiple images with an existing garment in batch."""
+        logger.info("adding_garment_images_batch", user_id=user_id, garment_id=garment_id, file_count=len(files))
+        if not self._media_service:
+            raise RuntimeError("MediaService is not configured")
+
+        if not files:
+            return []
+
+        async with self._uow as uow:
+            garment_repo = uow.get_repo_by_interface(GarmentRepositoryInterface)
+            garment = await garment_repo.get_by_id(garment_id)
+            if not garment or garment.user_id != user_id:
+                logger.warning("garment_batch_add_failed", reason="not_found_or_ownership", garment_id=garment_id)
+                raise GarmentNotFound(garment_id)
+
+            image_repo = uow.get_repo_by_interface(GarmentImageRepositoryInterface)
+            existing_images = await image_repo.get_by_garment_id(garment_id)
+            base_order = len(existing_images)
+            has_primary = any(img.is_primary for img in existing_images)
+
+            # Upload files concurrently
+            upload_tasks = [
+                self._media_service.upload_media(
+                    file=file,
+                    entity_type="garments",
+                    entity_id=garment_id,
+                    user_id=user_id,
+                )
+                for file in files
+            ]
+            uploaded_results = await asyncio.gather(*upload_tasks)
+
+            new_images: list[GarmentImageOut] = []
+            for idx, uploaded in enumerate(uploaded_results):
+                is_primary = not has_primary and idx == 0
+                new_image = GarmentImage(
+                    garment_id=garment_id,
+                    image_key=uploaded.file_key,
+                    is_primary=is_primary,
+                    order=base_order + idx,
+                )
+                new_image = await image_repo.add(new_image)
+                new_images.append(
+                    GarmentImageOut(
+                        id=new_image.id,
+                        garment_id=new_image.garment_id,
+                        image_key=new_image.image_key,
+                        url=uploaded.url,
+                        is_primary=new_image.is_primary,
+                        order=new_image.order,
+                        created_at=new_image.created_at,
+                    )
+                )
+
+            await uow.commit()
+            return new_images
+
+    async def delete_images_batch(
+        self, user_id: int, garment_id: int, image_ids: list[int]
+    ) -> bool:
+        """Remove multiple garment images from storage, cache, and database."""
+        logger.info("deleting_garment_images_batch", user_id=user_id, garment_id=garment_id, count=len(image_ids))
+        if not self._media_service:
+            raise RuntimeError("MediaService is not configured")
+
+        if not image_ids:
+            return True
+
+        async with self._uow as uow:
+            garment_repo = uow.get_repo_by_interface(GarmentRepositoryInterface)
+            garment = await garment_repo.get_by_id(garment_id)
+            if not garment or garment.user_id != user_id:
+                raise GarmentNotFound(garment_id)
+
+            image_repo = uow.get_repo_by_interface(GarmentImageRepositoryInterface)
+            images_to_delete: list[GarmentImage] = []
+            for img_id in image_ids:
+                img = await image_repo.get_by_id(img_id)
+                if not img or img.garment_id != garment_id:
+                    raise GarmentImageNotFound(img_id)
+                images_to_delete.append(img)
+
+            # Delete from S3 and cache concurrently
+            delete_tasks = [
+                self._media_service.delete_media(
+                    user_id=user_id, file_key=img.image_key
+                )
+                for img in images_to_delete
+            ]
+            await asyncio.gather(*delete_tasks)
+
+            for img in images_to_delete:
+                await image_repo.delete(img.id)
+
+            await uow.commit()
+            return True
+
+    async def _map_garment_to_out(self, garment: Garment) -> GarmentOut:
+        """Convert Garment ORM model into GarmentOut schema with signed image URLs."""
         colors_out = [
             GarmentColorOut(
                 id=gc.color.id if gc.color else gc.color_id,
@@ -304,6 +513,26 @@ class GarmentService(GarmentServiceInterface):
             for gc in (garment.colors or [])
             if gc.color is not None
         ]
+
+        images_out: list[GarmentImageOut] = []
+        for img in (garment.images or []):
+            url = None
+            if self._media_service:
+                url = await self._media_service.get_presigned_url(
+                    user_id=garment.user_id, file_key=img.image_key
+                )
+            images_out.append(
+                GarmentImageOut(
+                    id=img.id,
+                    garment_id=img.garment_id,
+                    image_key=img.image_key,
+                    url=url,
+                    is_primary=img.is_primary,
+                    order=img.order,
+                    created_at=img.created_at,
+                )
+            )
+
         return GarmentOut(
             id=garment.id,
             name=garment.name,
@@ -316,4 +545,5 @@ class GarmentService(GarmentServiceInterface):
             season=SeasonOut.model_validate(garment.season),
             usage=UsageOut.model_validate(garment.usage),
             colors=colors_out,
+            images=images_out,
         )

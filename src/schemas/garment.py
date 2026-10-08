@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import ConfigDict, Field
 
 from schemas.base_model import CamelCaseBaseModel
@@ -46,6 +47,18 @@ class GarmentColorOut(GarmentColorBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class GarmentImageOut(CamelCaseBaseModel):
+    id: int
+    garment_id: int
+    image_key: str
+    url: str | None = None
+    is_primary: bool
+    order: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class GarmentOut(CamelCaseBaseModel):
     id: int
     name: str
@@ -60,5 +73,6 @@ class GarmentOut(CamelCaseBaseModel):
     usage: UsageOut
     
     colors: list[GarmentColorOut]
+    images: list[GarmentImageOut] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)

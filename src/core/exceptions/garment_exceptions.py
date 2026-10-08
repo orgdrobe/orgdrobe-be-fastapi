@@ -36,3 +36,14 @@ class GarmentNameAlreadyExists(BaseAPIException):
         )
 
 
+class GarmentImageNotFound(BaseAPIException):
+    status_code = 404
+    code = ErrorCode.GARMENT_IMAGE_NOT_FOUND
+
+    def __init__(self, id: int):
+        super().__init__(
+            message=f"Garment image with id {id} not found",
+            details={"field": "image_id", "value": id}
+        )
+
+
